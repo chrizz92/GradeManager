@@ -10,23 +10,28 @@ import { GradesService } from './services/grades.service';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  
+
   students : Student[] = [];
   grades : Grade[] = [];
   filteredGrades : number[] = [];
+  filteredName : string = '';
+  /* isNegativeFilterSet : boolean = false; */
+  activeSorting : string = '';
+  gradeToAdd : Grade = {id:0,grade:0,student_id:0};
 
   constructor(private studentsService:StudentsService,private gradesService:GradesService){
-  
+
   }
 
   ngOnInit(): void {
     this.loadStudents();
-    this.loadGrades();
   }
 
   loadStudents(){
     this.studentsService.loadStudents().subscribe((data)=>{
       this.students = data;
+      this.gradeToAdd.student_id = this.getSortedStudents()[0].id;
+      this.loadGrades();
     });
   }
 
@@ -86,6 +91,111 @@ export class AppComponent implements OnInit {
   }
 
   setNegativeFilter(){
-    this.filteredGrades = [5];
+    /* this.isNegativeFilterSet = ! this.isNegativeFilterSet;
+    if(this.isNegativeFilterSet){
+      this.filteredGrades = [5];
+    }else{
+      this.filteredGrades = [];
+    } */
+    if(this.filteredGrades.length==1 && this.filteredGrades.includes(5)){
+      this.filteredGrades = [];
+    }else{
+      this.filteredGrades = [5];
+    }
   }
+
+  setPositveFilter(){
+    if(this.filteredGrades.length==4 && this.filteredGrades.includes(1) && this.filteredGrades.includes(2) && this.filteredGrades.includes(3) && this.filteredGrades.includes(4)){
+      this.filteredGrades = [];
+    }else{
+      this.filteredGrades = [1,2,3,4];
+    }
+  }
+
+  setNoGradeFilter(){
+    if(this.filteredGrades.length==1 && this.filteredGrades.includes(0)){
+      this.filteredGrades = [];
+    }else{
+      this.filteredGrades = [0];
+    }
+  }
+
+  checkFilteredName(name:string){
+    if(this.filteredName.trim()==''){
+      return true;
+    }else{
+      return name.trim().toLowerCase().startsWith(this.filteredName.trim().toLowerCase(),0);
+    }
+  }
+
+  sortByName(){
+    if(this.activeSorting.toLowerCase()=='name' && this.activeSorting == 'name'){
+        /*
+        this.students.sort((a,b)=>{
+        let result = b.lastname.localeCompare(a.lastname)
+        if(result==0){
+          result = b.firstname.localeCompare(a.firstname);
+        }
+        return result;
+        });
+        */
+        this.students.reverse();
+        this.activeSorting = 'NAME';
+    }else{
+      this.activeSorting = 'name';
+      this.students.sort((a,b)=>{
+        let result = a.lastname.localeCompare(b.lastname)
+        if(result==0){
+          result = a.firstname.localeCompare(b.firstname);
+        }
+        return result;
+      });
+    }
+  }
+
+  sortByFinalGrade(){
+    if(this.activeSorting.toLowerCase()=='grade' && this.activeSorting == 'grade'){
+      /* this.students.sort((a,b)=>this.getFinalGrade(b.id)-this.getFinalGrade(a.id)); */
+      this.students.reverse();
+      this.activeSorting = 'GRADE';
+    }else{
+      this.activeSorting = 'grade';
+      this.students.sort((a,b)=>this.getFinalGrade(a.id)-this.getFinalGrade(b.id));
+    }
+  }
+
+  sortByAge(){
+    if(this.activeSorting.toLowerCase()=='age' && this.activeSorting == 'age'){
+      /* this.students.sort((a,b)=>b.age - a.age); */
+      this.students.reverse();
+      this.activeSorting = 'AGE';
+    }else{
+      this.activeSorting = 'age';
+      this.students.sort((a,b)=>a.age - b.age);
+    }
+  }
+
+  getSortedStudents(){
+    let studentArray = this.students.concat([]);
+    return studentArray.sort((a,b)=>{
+      let result = a.lastname.localeCompare(b.lastname)
+      if(result==0){
+        result = a.firstname.localeCompare(b.firstname);
+      }
+      return result;
+    });
+  }
+
+  isGradeValid(){
+    let isInteger = !Number.isInteger(this.gradeToAdd.grade);
+    let isInRange = this.gradeToAdd.grade < 1 || this.gradeToAdd.grade > 5
+    return isInRange || isInteger;
+  }
+
+  addGrade(){
+    this.gradesService.addGrade(this.gradeToAdd).subscribe((grade)=>{
+      this.loadStudents();
+    });
+  }
+
 }

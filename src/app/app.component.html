@@ -3,42 +3,61 @@
   <hr>
   <div class="form-group">
     <h3>Add new grade</h3>
+    <div class="mt-3 row">
+      <label class="col-2">Student: </label>
+      <select [(ngModel)]="gradeToAdd.student_id" class="col-10">
+        <option *ngFor="let student of getSortedStudents()" [value]="student.id">{{student.lastname.toUpperCase()}} {{student.firstname}}</option>
+      </select>
+    </div>
+    <div class="mt-3 row">
+      <label class="col-2">Grade: </label>
+      <input class="col-10" type="number" [(ngModel)]="gradeToAdd.grade" [min]="1" [max]="5" [step]="1" #gradeInput="ngModel">
+      <span class="col-2" *ngIf="gradeInput.invalid && (gradeInput.touched || gradeInput.dirty)"></span>
+      <span class="text-danger col-10" *ngIf="gradeInput.invalid && (gradeInput.touched || gradeInput.dirty)">Grade must be between 1 and 5</span>
+    </div>
+    <div class="mt-3 row">
+      <label class="col-2"></label>
+      <button class="btn btn-primary col-10" [disabled]="isGradeValid()" (click)="addGrade()" >Add Grade</button>
+    </div>
   </div>
   <hr>
 <hr>
-<h3>List of students</h3>
-<h4>Filter by:</h4>
+  <h3>List of students</h3>
+  <h4>Filter by:</h4>
 <div class="row">
   <label class="col-2">Name: </label>
-  <input class="col-10" type="text">
+  <input class="col-10" type="text" [(ngModel)]="filteredName">
 </div>
-<div class="row mt-3">
+<div class="mt-3 row">
   <label class="col-2">Final grade:</label>
   <div class="col-10">
-    <button class="btn btn-primary w-19" (click)="setGradeFilter(1)">1</button>
+    <button class="btn w-19" (click)="setGradeFilter(1)" [ngClass]="filteredGrades.includes(1)?'btn-primary':'btn-outline-primary'">1</button>
     <span class="w-01"></span>
-    <button class="btn btn-primary w-19" (click)="setGradeFilter(2)">2</button>
+    <button class="btn w-19" (click)="setGradeFilter(2)" [ngClass]="filteredGrades.includes(2)?'btn-primary':'btn-outline-primary'">2</button>
     <span class="w-01"></span>
-    <button class="btn btn-primary w-19" (click)="setGradeFilter(3)">3</button>
+    <button class="btn w-19" (click)="setGradeFilter(3)" [ngClass]="filteredGrades.includes(3)?'btn-primary':'btn-outline-primary'">3</button>
     <span class="w-01"></span>
-    <button class="btn btn-primary w-19" (click)="setGradeFilter(4)">4</button>
+    <button class="btn w-19" (click)="setGradeFilter(4)" [ngClass]="filteredGrades.includes(4)?'btn-primary':'btn-outline-primary'">4</button>
     <span class="w-01"></span>
-    <button class="btn btn-primary w-19" (click)="setGradeFilter(5)">5</button>
+    <button class="btn w-19" (click)="setGradeFilter(5)" [ngClass]="filteredGrades.includes(5)?'btn-primary':'btn-outline-primary'">5</button>
   </div>
 </div>
-<div class="row mt-3">
+<div class="mt-3 row">
   <div class="col-2"></div>
   <div class="col-10 row">
     <div class="col-1"></div>
-    <button class="btn btn-outline-success col-3">positive</button>
+    <button class="btn col-3" (click)="setPositveFilter()" [ngClass]="filteredGrades.length==4&&filteredGrades.includes(1)&&filteredGrades.includes(2)&&filteredGrades.includes(3)&&filteredGrades.includes(4)?'btn-success':'btn-outline-success'">positive</button>
     <div class="col-1"></div>
-    <button class="btn btn-outline-danger col-3">negative</button>
+    <button class="btn col-3" (click)="setNegativeFilter()" [ngClass]="filteredGrades.length==1&&filteredGrades.includes(5) ?'btn-danger':'btn-outline-danger'">negative</button>
     <div class="col-1"></div>
-    <button class="btn btn-outline-secondary col-3">no grade</button>
+    <button class="btn col-3" (click)="setNoGradeFilter()" [ngClass]="filteredGrades.length==1&&filteredGrades.includes(0)?'btn-secondary':'btn-outline-secondary'">no grade</button>
   </div>
 </div>
 <h4>Sort by:</h4>
-<table class="table">
+<button class="btn w-19" (click)="sortByName()" [ngClass]="activeSorting.toLowerCase()=='name'?'btn-primary':'btn-outline-primary'">Name <i class="bi bi-arrow-down" *ngIf="activeSorting=='name'"></i><i class="bi bi-arrow-up" *ngIf="activeSorting=='NAME'"></i> </button>
+<button class="btn w-19" (click)="sortByFinalGrade()" [ngClass]="activeSorting.toLowerCase()=='grade'?'btn-primary':'btn-outline-primary'">Final grade <i class="bi bi-arrow-down" *ngIf="activeSorting=='grade'"></i><i class="bi bi-arrow-up" *ngIf="activeSorting=='GRADE'"></i></button>
+<button class="btn w-19" (click)="sortByAge()" [ngClass]="activeSorting.toLowerCase()=='age'?'btn-primary':'btn-outline-primary'">Age <i class="bi bi-arrow-down" *ngIf="activeSorting=='age'"></i><i class="bi bi-arrow-up" *ngIf="activeSorting=='AGE'"></i></button>
+<table class="table mt-3">
   <thead>
     <tr>
       <th>Name(Age)</th>
@@ -49,7 +68,7 @@
   </thead>
   <tbody>
     <ng-container *ngFor="let student of students">
-      <tr *ngIf="isFilteredGrade(getFinalGrade(student.id))" [ngStyle]="{'background-color': this.getFinalGrade(student.id)===5 ? 'red' : this.getFinalGrade(student.id)===0 ? 'gray' : ''}">
+      <tr *ngIf="(checkFilteredName(student.lastname) || checkFilteredName(student.firstname)) && isFilteredGrade(getFinalGrade(student.id))" [ngStyle]="{'background-color': this.getFinalGrade(student.id)===5 ? 'red' : this.getFinalGrade(student.id)===0 ? 'gray' : ''}">
         <td>{{student.lastname.toUpperCase()}} {{student.firstname}}({{student.age}})</td>
         <td>{{getBestGrade(student.id)}}</td>
         <td>{{getWorstGrade(student.id)}}</td>
